@@ -1,12 +1,12 @@
 package wikipedia
 
-import org.scalatest.{FunSuite, BeforeAndAfterAll}
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
+import org.apache.spark.rdd.RDD
 
 @RunWith(classOf[JUnitRunner])
 class WikipediaSuite extends FunSuite with BeforeAndAfterAll {
@@ -112,7 +112,8 @@ class WikipediaSuite extends FunSuite with BeforeAndAfterAll {
         WikipediaArticle("3","Scala is not purely functional")
       )
     val rdd = sc.parallelize(articles)
-    val index = makeIndex(langs, rdd)
+    val index: RDD[(String, Iterable[WikipediaArticle])] = makeIndex(langs, rdd)
+    index.collect().foreach(println)
     val res = index.count() == 2
     assert(res)
   }
