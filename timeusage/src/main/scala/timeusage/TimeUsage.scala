@@ -2,6 +2,8 @@ package timeusage
 
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
+
 
 /** Main class */
 object TimeUsage extends TimeUsageInterface {
@@ -64,7 +66,17 @@ object TimeUsage extends TimeUsageInterface {
     *    “t10”, “t12”, “t13”, “t14”, “t15”, “t16” and “t18” (those which are not part of the previous groups only).
     */
   def classifiedColumns(columnNames: List[String]): (List[Column], List[Column], List[Column]) = {
-    ???
+      columnNames.foldLeft(List[Column](), List[Column](), List[Column]()) {
+        (grouped: (List[Column], List[Column], List[Column]), colName: String) => {
+          lazy val (primary, working, leisure) = grouped
+          colName match {
+          case c if c.startsWith("t01") | c.startsWith("t03") |
+            c.startsWith("t11") | c.startsWith("t1801") | c.startsWith("t1803") => (col(c) :: primary, working, leisure)
+          case d if d.startsWith("t05") | d.startsWith("t1805") => (primary, col(d) :: working, leisure)
+          case x => (primary, working, col(x) :: leisure)
+        }
+      }
+    }
   }
 
   /** @return a projection of the initial DataFrame such that all columns containing hours spent on primary needs
