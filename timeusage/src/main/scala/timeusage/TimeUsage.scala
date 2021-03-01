@@ -85,7 +85,7 @@ object TimeUsage extends TimeUsageInterface {
     *
     * @param primaryNeedsColumns List of columns containing time spent on “primary needs”
     * @param workColumns List of columns containing time spent working
-    * @param otherColumns List of columns containing time spent doing other activities
+    * @param otherColumns List of columns containing time spents doing other activities
     * @param df DataFrame whose schema matches the given column lists
     *
     * This methods builds an intermediate DataFrame that sums up all the columns of each group of activity into
@@ -119,17 +119,18 @@ object TimeUsage extends TimeUsageInterface {
     // more sense for our use case
     // Hint: you can use the `when` and `otherwise` Spark functions
     // Hint: don’t forget to give your columns the expected name with the `as` method
-    val workingStatusProjection: Column = ???
-    val sexProjection: Column = ???
-    val ageProjection: Column = ???
+    val workingStatusProjection: Column = when(col("telfs") < 3 && col("telfs") >= 1 , "working").otherwise("not working").as("working")
+    val sexProjection: Column = when(col("tesex") === 1, "male").otherwise("female").as("sex")
+    val ageProjection: Column = when(col("teage") >= 15 && col("teage") <= 22, "young")
+      .when(col("teage") <= 55, "active").otherwise("elder").as("age")
 
     // Create columns that sum columns of the initial dataset
     // Hint: you want to create a complex column expression that sums other columns
     //       by using the `+` operator between them
     // Hint: don’t forget to convert the value to hours
-    val primaryNeedsProjection: Column = ???
-    val workProjection: Column = ???
-    val otherProjection: Column = ???
+    val primaryNeedsProjection: Column = primaryNeedsColumns.reduce(_ + _).divide(60).as("primaryNeeds")
+    val workProjection: Column = workColumns.reduce(_ + _).divide(60).as("work")
+    val otherProjection: Column = otherColumns.reduce(_ + _).divide(60).as("other")
     df
       .select(workingStatusProjection, sexProjection, ageProjection, primaryNeedsProjection, workProjection, otherProjection)
       .where($"telfs" <= 4) // Discard people who are not in labor force
